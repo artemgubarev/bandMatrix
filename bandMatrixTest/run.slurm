@@ -10,7 +10,6 @@
 export INPUT_MATRIX_FILE="testData/matrix4x4x1.txt"
 
 # module load compiler/gcc/9
-# module load matlab/2022b
 
 g++ -o bandMatrix bandMatrixTest.cpp
 
