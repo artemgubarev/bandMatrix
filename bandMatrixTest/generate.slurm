@@ -8,4 +8,4 @@
 N=4000
 B=1756
 
-python3 generate_matrix.py $N $B
+python3 generator.py $N $B
