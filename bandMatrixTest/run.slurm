@@ -1,7 +1,7 @@
 #!/bin/bash
 #SBATCH --job-name=bandMatrix
-#SBATCH --output=output_%j.log
-#SBATCH --error=error_%j.log
+#SBATCH --output=out.log
+#SBATCH --error=err.log
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=1
