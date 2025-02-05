@@ -1,7 +1,7 @@
 #!/bin/bash
 #SBATCH --job-name=cleanup_job
 #SBATCH --output=/dev/null
-#SBATCH --error=/dev/null
+#SBATCH --error=slurm_log.log
 #SBATCH --time=00:05:00
 #SBATCH --ntasks=1
 
