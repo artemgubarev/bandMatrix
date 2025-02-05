@@ -1,5 +1,6 @@
 import numpy as np
 import sys
+import os
 
 def generate_banded_matrix(n, b, low=1, high=10):
     random_values = np.random.randint(low, high, size=(n, 2 * b + 1))
