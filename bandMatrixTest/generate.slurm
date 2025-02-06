@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --job-name=cleanup_job
-#SBATCH --output=/dev/null
+#SBATCH --output=/dev/tty
 #SBATCH --error=err_gen.log
 #SBATCH --time=00:05:00
 #SBATCH --ntasks=1
