@@ -34,13 +34,14 @@ int main()
 
     start = clock();
 
+    DecomposeMatrix decompose;
     switch (mode)
     {
     case 0:
-        DecomposeMatrix decompose = band_matrix::lu_decomposition(matrix);
+        decompose = band_matrix::lu_decomposition(matrix);
         band_matrix::solve_lu(decompose, &matrix);
     case 1:
-        DecomposeMatrix decompose = band_matrix_omp::lu_decomposition(matrix);
+        decompose = band_matrix_omp::lu_decomposition(matrix);
         band_matrix_omp::solve_lu(decompose, &matrix);
     default:
         std::cerr << "MODE value error." << std::endl;

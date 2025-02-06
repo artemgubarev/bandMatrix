@@ -23,11 +23,6 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <Text Include="matrix4x4x1.txt">
-      <Filter>TestData</Filter>
-    </Text>
-  </ItemGroup>
-  <ItemGroup>
     <None Include="solve_slae.m">
       <Filter>Source Files</Filter>
     </None>

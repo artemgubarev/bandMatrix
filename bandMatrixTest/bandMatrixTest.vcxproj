@@ -132,9 +132,6 @@
     <ClCompile Include="bandMatrixTest.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <Text Include="matrix4x4x1.txt" />
-  </ItemGroup>
-  <ItemGroup>
     <None Include="generate.slurm" />
     <None Include="generator.py" />
     <None Include="rm.slurm" />
