@@ -10,6 +10,4 @@ B=1756
 
 python3 generator.py $N $B
 
-TTY_PATH=$(who am i | awk '{print $2}')
-TTY_FULL="/dev/$TTY_PATH"
-echo "Ваше задание завершено!" | socat - "PTY,link=$TTY_FULL"
+echo "finish" | wall
