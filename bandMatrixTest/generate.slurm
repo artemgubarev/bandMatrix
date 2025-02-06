@@ -10,4 +10,4 @@ B=1756
 
 python3 generator.py $N $B
 
-echo "finish" | wall
+scontrol write batch_script $SLURM_JOB_ID "echo 'finish'"
