@@ -10,4 +10,5 @@ B=1756
 
 python3 generator.py $N $B
 
-scontrol write batch_script $SLURM_JOB_ID "echo 'finish'"
+TTY=$(who am i | awk '{print $2}')
+echo "finish" > /dev/$TTY
