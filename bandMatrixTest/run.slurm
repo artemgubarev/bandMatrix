@@ -15,3 +15,5 @@ g++ -o bandMatrix bandMatrixTest.cpp
 
 srun matlab -nodisplay -nosplash -nodesktop -r "run('solve_slae.m'); exit"
 srun ./bandMatrix
+
+echo -e "\e[32mrun SLURM finished$(date)\e[0m"

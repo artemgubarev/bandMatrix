@@ -6,3 +6,5 @@
 #SBATCH --ntasks=1
 
 rm -f err* out* bandMatrix comparator solution.txt msolution.txt
+
+echo -e "\e[32mrm SLURM finished$(date)\e[0m"
