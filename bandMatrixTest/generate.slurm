@@ -9,6 +9,3 @@ N=4000
 B=1756
 
 python3 generator.py $N $B
-
-TTY=$(who am i | awk '{print $2}')
-echo "finish" > /dev/$TTY
