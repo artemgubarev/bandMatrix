@@ -10,4 +10,4 @@ B=1756
 
 python3 generator.py $N $B
 
-echo -e "\e[32mgenerate SLURM finished $(date)\e[0m" | tee /dev/tty
+echo -e "\e[32m generate SLURM finished $(date)\e[0m"
