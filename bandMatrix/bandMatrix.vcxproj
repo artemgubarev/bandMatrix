@@ -20,6 +20,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="matrix.h" />
+    <ClInclude Include="solver_omp.h" />
     <ClInclude Include="printer.h" />
     <ClInclude Include="solver.h" />
     <ClInclude Include="writer.h" />

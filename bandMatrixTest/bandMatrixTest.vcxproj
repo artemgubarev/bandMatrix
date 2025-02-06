@@ -130,15 +130,19 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="bandMatrixTest.cpp" />
-    <ClCompile Include="comparator.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="matrix4x4x1.txt" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="generate.slurm" />
+    <None Include="generator.py" />
     <None Include="rm.slurm" />
     <None Include="run.slurm" />
     <None Include="solve_slae.m" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="comparator.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

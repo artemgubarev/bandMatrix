@@ -21,9 +21,6 @@
     <ClCompile Include="bandMatrixTest.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="comparator.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Text Include="matrix4x4x1.txt">
@@ -40,5 +37,14 @@
     <None Include="rm.slurm">
       <Filter>Source Files</Filter>
     </None>
+    <None Include="generator.py" />
+    <None Include="generate.slurm">
+      <Filter>Source Files</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="comparator.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

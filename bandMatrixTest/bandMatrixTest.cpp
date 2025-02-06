@@ -5,6 +5,7 @@
 #include "../bandMatrix/solver.h"
 #include "../bandMatrix/matrix.h"
 #include "../bandMatrix/writer.h"
+#include "../bandMatrix/solver_omp.h"
 
 int main()
 {
@@ -15,6 +16,17 @@ int main()
         return 1;
     }
 
+    int mode = -1;
+    const char* mode_env = getenv("MODE");
+    if (mode_env)
+    {
+        mode = std::atoi(mode_env);
+    }
+    else
+    {
+        std::cerr << "Warning: SLURM_PARAM not set." << std::endl;
+    }
+
     clock_t start, end;
     double cpu_time_used;
 
@@ -22,9 +34,18 @@ int main()
 
     start = clock();
 
-    DecomposeMatrix decompose = band_matrix::lu_decomposition(matrix);
-    band_matrix::solve_lu(decompose, &matrix);
-
+    switch (mode)
+    {
+    case 0:
+        DecomposeMatrix decompose = band_matrix::lu_decomposition(matrix);
+        band_matrix::solve_lu(decompose, &matrix);
+    case 1:
+        DecomposeMatrix decompose = band_matrix_omp::lu_decomposition(matrix);
+        band_matrix_omp::solve_lu(decompose, &matrix);
+    default:
+        std::cerr << "MODE value error." << std::endl;
+    }
+    
     end = clock();
 
     write_1d("solution.txt", matrix.X, matrix.n);

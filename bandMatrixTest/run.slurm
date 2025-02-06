@@ -9,6 +9,10 @@
 
 export INPUT_MATRIX_FILE="testData/matrix4x4x1.txt"
 
+# 0 - 1 steam
+# 1 - omp
+export MODE=0
+
 # module load compiler/gcc/9
 
 g++ -o bandMatrix bandMatrixTest.cpp
