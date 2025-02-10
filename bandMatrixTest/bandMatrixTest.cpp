@@ -4,6 +4,7 @@
 #include <time.h>
 //#include <mpi.h>
 #include <omp.h>
+#include <chrono>
 #include "comparator.h"
 #include "../bandMatrix/matrix.h"
 #include "../bandMatrix/solver.h"
@@ -14,6 +15,8 @@
 
 int main(int argc, char* argv[])
 {
+    using namespace std::chrono;
+
     //MPI_Init(&argc, &argv);
 
     const char* filename = getenv("INPUT_MATRIX_FILE");
@@ -43,7 +46,7 @@ int main(int argc, char* argv[])
     //Matrix matrix = read_matrix("matrix2000.txt");
     Matrix matrix = read_matrix(filename);
 
-    clock_t start = clock();
+    auto start = high_resolution_clock::now();
 
     DecomposeMatrix decompose;
     /*decompose = band_matrix_omp::lu_decomposition_omp(matrix);
@@ -66,9 +69,8 @@ int main(int argc, char* argv[])
         //MPI_Abort(MPI_COMM_WORLD, 2);
     }
 
-    clock_t end = clock();
-
-    double cpu_time_used = ((double)(end - start)) / CLOCKS_PER_SEC;
+    auto end = high_resolution_clock::now();
+    duration<double> elapsed = end - start;
 
     write_1d("solution.txt", matrix.X, matrix.n);
 
@@ -76,7 +78,7 @@ int main(int argc, char* argv[])
 
     if (mode != -1) {
 
-        printf("Time: %f sec.\n", cpu_time_used);
+        printf("Time: %f sec.\n", elapsed);
 
         // compare
         double epsilon = 0.00001;
