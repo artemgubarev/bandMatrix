@@ -27,6 +27,12 @@
     <ClInclude Include="writer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="solver_mpi.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="solver_mpi_omp.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="solver_omp.h">
       <Filter>Header Files</Filter>
     </ClInclude>

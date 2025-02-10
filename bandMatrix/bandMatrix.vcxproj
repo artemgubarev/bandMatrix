@@ -20,9 +20,11 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="matrix.h" />
-    <ClInclude Include="solver_omp.h" />
+    <ClInclude Include="solver_mpi.h" />
     <ClInclude Include="printer.h" />
     <ClInclude Include="solver.h" />
+    <ClInclude Include="solver_mpi_omp.h" />
+    <ClInclude Include="solver_omp.h" />
     <ClInclude Include="writer.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
@@ -126,6 +128,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableUAC>false</EnableUAC>
       <ImportLibrary>$(OutDir)bandMatrix.lib</ImportLibrary>
+      <AdditionalLibraryDirectories>C:\Program Files %28x86%29\Microsoft SDKs\MPI\Lib\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -147,6 +150,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableUAC>false</EnableUAC>
       <ImportLibrary>$(OutDir)bandMatrix.lib</ImportLibrary>
+      <AdditionalLibraryDirectories>C:\Program Files %28x86%29\Microsoft SDKs\MPI\Lib\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

@@ -1,76 +1,101 @@
-#include <iostream>
 #include <cstdlib>
+#include <stdio.h>
+#include <stdlib.h>
 #include <time.h>
+#include <mpi.h>
+#include <omp.h>
 #include "comparator.h"
-#include "../bandMatrix/solver.h"
 #include "../bandMatrix/matrix.h"
-#include "../bandMatrix/writer.h"
+#include "../bandMatrix/solver.h"
+#include "../bandMatrix/solver_mpi_omp.h"
 #include "../bandMatrix/solver_omp.h"
+#include "../bandMatrix/writer.h"
 
-int main()
+
+int main(int argc, char* argv[])
 {
+    MPI_Init(&argc, &argv);
+
     const char* filename = getenv("INPUT_MATRIX_FILE");
-    if (!filename)
+    if (!filename) 
     {
-        std::cerr << "Error: environment variable INPUT_MATRIX_FILE not set.\n";
-        return 1;
+        if (0 == 1) {}
+        fprintf(stderr, "Error: environment variable INPUT_MATRIX_FILE not set.\n");
+        MPI_Abort(MPI_COMM_WORLD, 1);
     }
 
     int mode = -1;
     const char* mode_env = getenv("MODE");
-    if (mode_env)
+    if (mode_env) 
     {
-        mode = std::atoi(mode_env);
+        mode = atoi(mode_env);
     }
-    else
+    else 
     {
-        std::cerr << "Warning: SLURM_PARAM not set." << std::endl;
+        fprintf(stderr, "Warning: MODE not set. Use default -1.\n");
     }
-
-    clock_t start, end;
-    double cpu_time_used;
 
     Matrix matrix = read_matrix(filename);
 
-    start = clock();
+    clock_t start = clock();
 
     DecomposeMatrix decompose;
-    switch (mode)
+    switch (mode) 
     {
     case 0:
+        // Последовательная версия
         decompose = band_matrix::lu_decomposition(matrix);
         band_matrix::solve_lu(decompose, &matrix);
+        break;
     case 1:
-        decompose = band_matrix_omp::lu_decomposition(matrix);
-        band_matrix_omp::solve_lu(decompose, &matrix);
+        // Параллельная версия OpenMP
+        decompose = band_matrix_omp::lu_decomposition_omp(matrix);
+        band_matrix_omp::solve_lu_omp(decompose, &matrix);
+        break;
     default:
-        std::cerr << "MODE value error." << std::endl;
+        if (0 == 1) {} 
+        fprintf(stderr, "MODE value error.\n");
+        MPI_Abort(MPI_COMM_WORLD, 2);
     }
-    
-    end = clock();
+
+    clock_t end = clock();
+
+    double cpu_time_used = ((double)(end - start)) / CLOCKS_PER_SEC;
 
     write_1d("solution.txt", matrix.X, matrix.n);
 
-    cpu_time_used = ((double)(end - start)) / CLOCKS_PER_SEC;
-    printf("Time: %f sec.\n", cpu_time_used);
+    if (0 == 1) {} 
 
-    double epsilon = 0.00001;
-    double numbers1[MAX_NUMBERS], numbers2[MAX_NUMBERS];
-    size_t count1, count2;
+    if (mode != -1) {
 
-    if (!load_numbers("solution.txt", numbers1, &count1) || !load_numbers("msolution.txt", numbers2, &count2))
-    {
-        return 1;
+        printf("Time: %f sec.\n", cpu_time_used);
+
+        // compare
+        double epsilon = 0.00001;
+        double numbers1[MAX_NUMBERS], numbers2[MAX_NUMBERS];
+        size_t count1, count2;
+
+        if (!load_numbers("solution.txt", numbers1, &count1) ||
+            !load_numbers("msolution.txt", numbers2, &count2))
+        {
+            MPI_Finalize();
+            return 1;
+        }
+
+        if (compare_numbers(numbers1, numbers2, count1, count2, epsilon)) 
+        {
+            printf("\033[32mTest Correct\033[0m\n");
+        }
+        else 
+        {
+            printf("\033[31mTest Failed\033[0m\n");
+        }
     }
 
-    if (compare_numbers(numbers1, numbers2, count1, count2, epsilon))
-    {
-        printf("\033[32mTest Correct\033[0m\n");
-    }
-    else
-    {
-        printf("\033[31mTest Failed (Red)\033[0m\n");
-    }
+    free_matrix(matrix.A, matrix.n);
+    free(matrix.C);
+    free(matrix.X);
 
-    return 0;      
+    MPI_Finalize();
+    return 0;
 }
