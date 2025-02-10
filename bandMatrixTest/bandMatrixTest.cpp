@@ -44,8 +44,8 @@ int main(int argc, char* argv[])
     {
     case 0:
         // Последовательная версия
-        decompose = band_matrix::lu_decomposition(matrix);
-        band_matrix::solve_lu(decompose, &matrix);
+       /* decompose = band_matrix::lu_decomposition(matrix);
+        band_matrix::solve_lu(decompose, &matrix);*/
         break;
     case 1:
         // Параллельная версия OpenMP
