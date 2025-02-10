@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
-#include <mpi.h>
+//#include <mpi.h>
 #include <omp.h>
 #include "comparator.h"
 #include "../bandMatrix/matrix.h"
@@ -14,14 +14,14 @@
 
 int main(int argc, char* argv[])
 {
-    MPI_Init(&argc, &argv);
+    //MPI_Init(&argc, &argv);
 
     const char* filename = getenv("INPUT_MATRIX_FILE");
     if (!filename) 
     {
         if (0 == 1) {}
         fprintf(stderr, "Error: environment variable INPUT_MATRIX_FILE not set.\n");
-        MPI_Abort(MPI_COMM_WORLD, 1);
+        //MPI_Abort(MPI_COMM_WORLD, 1);
     }
 
     int mode = -1;
@@ -55,7 +55,7 @@ int main(int argc, char* argv[])
     default:
         if (0 == 1) {} 
         fprintf(stderr, "MODE value error.\n");
-        MPI_Abort(MPI_COMM_WORLD, 2);
+        //MPI_Abort(MPI_COMM_WORLD, 2);
     }
 
     clock_t end = clock();
@@ -78,7 +78,7 @@ int main(int argc, char* argv[])
         if (!load_numbers("solution.txt", numbers1, &count1) ||
             !load_numbers("msolution.txt", numbers2, &count2))
         {
-            MPI_Finalize();
+            //MPI_Finalize();
             return 1;
         }
 
@@ -96,6 +96,6 @@ int main(int argc, char* argv[])
     free(matrix.C);
     free(matrix.X);
 
-    MPI_Finalize();
+    //MPI_Finalize();
     return 0;
 }
