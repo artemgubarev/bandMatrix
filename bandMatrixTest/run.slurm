@@ -6,7 +6,6 @@
 #SBATCH --ntasks=1             
 #SBATCH --cpus-per-task=2     
 #SBATCH --time=01:00:00
-#SBATCH --partition=compute   
 
 export INPUT_MATRIX_FILE="testData/matrix2000x1600.txt"
 # 0 - Serial version
