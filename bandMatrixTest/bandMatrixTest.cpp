@@ -82,9 +82,9 @@ int main(int argc, char* argv[])
     //}
 
     #pragma omp parallel for
-    for (int i = 0; i < 10000; i++) 
+    for (int i = 0; i < 10000000; i++) 
     {
-        double x = i * 2.0;
+        double x = sin(i) * log(i + 1) / sqrt(i + 1);
     }
 
     double end_time = get_time();
