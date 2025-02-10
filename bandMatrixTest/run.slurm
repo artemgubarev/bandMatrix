@@ -23,3 +23,4 @@ export OMP_WAIT_POLICY=passive
 g++ -o bandMatrix bandMatrixTest.cpp
 
 srun ./bandMatrix
+matlab -nodisplay -nosplash -r "run('solve_slae.m'); exit;"
