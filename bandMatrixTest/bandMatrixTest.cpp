@@ -35,11 +35,14 @@ int main(int argc, char* argv[])
         fprintf(stderr, "Warning: MODE not set. Use default -1.\n");
     }
 
+    //Matrix matrix = read_matrix("matrix2000.txt");
     Matrix matrix = read_matrix(filename);
 
     clock_t start = clock();
 
     DecomposeMatrix decompose;
+    /*decompose = band_matrix_omp::lu_decomposition_omp(matrix);
+    band_matrix_omp::solve_lu_omp(decompose, &matrix);*/
     switch (mode) 
     {
     case 0:
