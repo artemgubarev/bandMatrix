@@ -4,7 +4,6 @@
 #include <time.h>
 //#include <mpi.h>
 #include <omp.h>
-#include <chrono>
 #include "comparator.h"
 #include "../bandMatrix/matrix.h"
 #include "../bandMatrix/solver.h"
@@ -12,10 +11,27 @@
 #include "../bandMatrix/solver_omp.h"
 #include "../bandMatrix/writer.h"
 
+#ifdef _WIN32
+#include <windows.h>
+#else
+#include <sys/time.h>
+#endif
+
+double get_time() {
+#ifdef _WIN32
+    LARGE_INTEGER frequency, start;
+    QueryPerformanceFrequency(&frequency);
+    QueryPerformanceCounter(&start);
+    return (double)start.QuadPart / frequency.QuadPart;
+#else
+    struct timespec t;
+    clock_gettime(CLOCK_MONOTONIC, &t);
+    return t.tv_sec + t.tv_nsec * 1e-9;
+#endif
+}
 
 int main(int argc, char* argv[])
 {
-    using namespace std::chrono;
 
     //MPI_Init(&argc, &argv);
 
@@ -38,15 +54,11 @@ int main(int argc, char* argv[])
         fprintf(stderr, "Warning: MODE not set. Use default -1.\n");
     }
 
-    /*#pragma omp parallel
-    {
-        printf("Thread %d out of %d\n", omp_get_thread_num(), omp_get_num_threads());
-    }*/
 
     //Matrix matrix = read_matrix("matrix2000.txt");
     //Matrix matrix = read_matrix(filename);
 
-    //auto start = high_resolution_clock::now();
+    double start_time = get_time();
 
     //DecomposeMatrix decompose;
     ///*decompose = band_matrix_omp::lu_decomposition_omp(matrix);
@@ -69,14 +81,14 @@ int main(int argc, char* argv[])
     //    //MPI_Abort(MPI_COMM_WORLD, 2);
     //}
 
-    /*#pragma omp parallel for
+    #pragma omp parallel for
     for (int i = 0; i < 10000; i++) 
     {
         double x = i * 2.0;
     }
 
-    auto end = high_resolution_clock::now();
-    duration<double> elapsed = end - start;*/
+    double end_time = get_time();
+    printf("Execution time: %.6f seconds\n", end_time - start_time);
 
     //write_1d("solution.txt", matrix.X, matrix.n);
 
