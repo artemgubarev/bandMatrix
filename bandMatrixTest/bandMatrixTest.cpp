@@ -35,10 +35,10 @@ int main(int argc, char* argv[])
         fprintf(stderr, "Warning: MODE not set. Use default -1.\n");
     }
 
-    #pragma omp parallel
+    /*#pragma omp parallel
     {
         printf("Thread %d out of %d\n", omp_get_thread_num(), omp_get_num_threads());
-    }
+    }*/
 
     //Matrix matrix = read_matrix("matrix2000.txt");
     Matrix matrix = read_matrix(filename);
