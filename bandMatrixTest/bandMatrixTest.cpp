@@ -46,7 +46,7 @@ int main(int argc, char* argv[])
     //Matrix matrix = read_matrix("matrix2000.txt");
     //Matrix matrix = read_matrix(filename);
 
-    auto start = high_resolution_clock::now();
+    //auto start = high_resolution_clock::now();
 
     //DecomposeMatrix decompose;
     ///*decompose = band_matrix_omp::lu_decomposition_omp(matrix);
@@ -69,14 +69,14 @@ int main(int argc, char* argv[])
     //    //MPI_Abort(MPI_COMM_WORLD, 2);
     //}
 
-    #pragma omp parallel for
+    /*#pragma omp parallel for
     for (int i = 0; i < 10000; i++) 
     {
         double x = i * 2.0;
     }
 
     auto end = high_resolution_clock::now();
-    duration<double> elapsed = end - start;
+    duration<double> elapsed = end - start;*/
 
     //write_1d("solution.txt", matrix.X, matrix.n);
 
