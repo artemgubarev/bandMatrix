@@ -142,6 +142,7 @@
   <ItemGroup>
     <None Include="generate.slurm" />
     <None Include="generator.py" />
+    <None Include="matlab.slurm" />
     <None Include="rm.slurm" />
     <None Include="run.slurm" />
     <None Include="solve_slae.m" />

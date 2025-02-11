@@ -36,6 +36,7 @@
     <None Include="generate.slurm">
       <Filter>Source Files</Filter>
     </None>
+    <None Include="matlab.slurm" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="comparator.h">
