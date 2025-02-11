@@ -11,7 +11,6 @@
 #include "../bandMatrix/solver_mpi_omp.h"
 #include "../bandMatrix/solver_omp.h"
 #include "../bandMatrix/solver_mpi.h"
-#include "../bandMatrix/solver_mpi_omp.h"
 #include "../bandMatrix/writer.h"
 
 #ifdef _WIN32

@@ -43,7 +43,7 @@ namespace band_matrix_mpi_omp
         {
             // 1) Инициализация U копией A, и L — единичная диагональ
             // Параллелим инициализацию циклов с помощью OpenMP
-#pragma omp parallel for schedule(static)
+            #pragma omp parallel for schedule(static)
             for (int i = 0; i < n; i++) {
                 for (int j = 0; j < n; j++) {
                     result.u[i][j] = matrix.A[i][j];
@@ -58,7 +58,7 @@ namespace band_matrix_mpi_omp
 
                 // Обновляем строки i = k+1..k+b
                 // Распараллелим цикл по i
-#pragma omp parallel for schedule(static)
+                #pragma omp parallel for schedule(static)
                 for (int i = k + 1; i < MIN(k + b + 1, n); i++) {
                     result.l[i][k] = result.u[i][k] / pivotVal;
                     for (int j = k; j < MIN(k + b + 1, n); j++) {
@@ -105,7 +105,7 @@ namespace band_matrix_mpi_omp
             for (int i = 0; i < n; i++) {
                 double s = 0.0;
                 // Внутренний цикл суммирования можно распараллелить
-#pragma omp parallel for reduction(+:s)
+                #pragma omp parallel for reduction(+:s)
                 for (int j = 0; j < i; j++) {
                     s += decomp.l[i][j] * y[j];
                 }
@@ -118,7 +118,7 @@ namespace band_matrix_mpi_omp
             for (int i = n - 1; i >= 0; i--) {
                 double s = 0.0;
                 // Снова распараллелим внутренний цикл суммирования
-#pragma omp parallel for reduction(+:s)
+                #pragma omp parallel for reduction(+:s)
                 for (int j = i + 1; j < n; j++) {
                     s += decomp.u[i][j] * matrix->X[j];
                 }
