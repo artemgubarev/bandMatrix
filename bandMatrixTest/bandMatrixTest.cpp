@@ -30,6 +30,31 @@ double get_time() {
 #endif
 }
 
+void get_output_filename(const char* input_file, char* output_filename, size_t size) {
+    const char* filename = strrchr(input_file, '/');
+    filename = (filename) ? filename + 1 : input_file;
+
+    const char* name_part = strstr(filename, "matrix");
+    if (name_part) {
+        name_part += 6;
+    }
+    else {
+        name_part = filename;
+    }
+
+    char name_only[256];
+    strncpy(name_only, name_part, sizeof(name_only) - 1);
+    name_only[sizeof(name_only) - 1] = '\0';
+
+    char* dot = strrchr(name_only, '.');
+    if (dot) {
+        *dot = '\0';
+    }
+
+    snprintf(output_filename, size, "matlabSolutions/msolution%s.txt", name_only);
+}
+
+
 int main(int argc, char* argv[])
 {
 
@@ -61,8 +86,6 @@ int main(int argc, char* argv[])
     double start_time = get_time();
 
     DecomposeMatrix decompose;
-    /*decompose = band_matrix_omp::lu_decomposition_omp(matrix);
-    band_matrix_omp::solve_lu_omp(decompose, &matrix);*/
     switch (mode) 
     {
     case 0:
@@ -96,11 +119,11 @@ int main(int argc, char* argv[])
         double numbers1[MAX_NUMBERS], numbers2[MAX_NUMBERS];
         size_t count1, count2;
 
-        char msolutionName[256];
-        sprintf(msolutionName, "matlabSolutions/msolution%zux%zu.txt", matrix.n, matrix.n);
+        char output_filename[512];
+        get_output_filename(filename, output_filename, sizeof(output_filename));
 
         if (!load_numbers("solution.txt", numbers1, &count1) ||
-            !load_numbers("msolutionName", numbers2, &count2))
+            !load_numbers(output_filename, numbers2, &count2))
         {
             //MPI_Finalize();
             return 1;
