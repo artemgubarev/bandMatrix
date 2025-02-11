@@ -8,6 +8,5 @@
 N=4000
 B=1756
 
-
 module load python/3.8
 python3 generator.py $N $B

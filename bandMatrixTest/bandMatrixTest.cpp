@@ -3,13 +3,15 @@
 #include <stdlib.h>
 #include <cstring>
 #include <time.h>
-//#include <mpi.h>
+#include <mpi.h>
 #include <omp.h>
 #include "comparator.h"
 #include "../bandMatrix/matrix.h"
 #include "../bandMatrix/solver.h"
 #include "../bandMatrix/solver_mpi_omp.h"
 #include "../bandMatrix/solver_omp.h"
+#include "../bandMatrix/solver_mpi.h"
+#include "../bandMatrix/solver_mpi_omp.h"
 #include "../bandMatrix/writer.h"
 
 #ifdef _WIN32
@@ -31,7 +33,8 @@ double get_time() {
 #endif
 }
 
-void get_output_filename(const char* input_file, char* output_filename, size_t size) {
+void get_output_filename(const char* input_file, char* output_filename, size_t size) 
+{
     const char* filename = strrchr(input_file, '/');
     filename = (filename) ? filename + 1 : input_file;
 
@@ -58,15 +61,11 @@ void get_output_filename(const char* input_file, char* output_filename, size_t s
 
 int main(int argc, char* argv[])
 {
-
-    //MPI_Init(&argc, &argv);
-
     const char* filename = getenv("INPUT_MATRIX_FILE");
     if (!filename) 
     {
         if (0 == 1) {}
         fprintf(stderr, "Error: environment variable INPUT_MATRIX_FILE not set.\n");
-        //MPI_Abort(MPI_COMM_WORLD, 1);
     }
 
     int mode = -1;
@@ -80,34 +79,74 @@ int main(int argc, char* argv[])
         fprintf(stderr, "Warning: MODE not set. Use default -1.\n");
     }
 
-
-    //Matrix matrix = read_matrix("matrix2000.txt");
-    Matrix matrix = read_matrix(filename);
-
     double start_time = get_time();
 
     DecomposeMatrix decompose;
-    switch (mode) 
+
+    if (mode == 0 || mode == 1)
     {
-    case 0:
-        // Последовательная версия
-       /* decompose = band_matrix::lu_decomposition(matrix);
-        band_matrix::solve_lu(decompose, &matrix);*/
-        break;
-    case 1:
-        // Параллельная версия OpenMP
-        decompose = band_matrix_omp::lu_decomposition_omp(matrix);
-        band_matrix_omp::solve_lu_omp(decompose, &matrix);
-        break;
-    default:
-        if (0 == 1) {} 
-        fprintf(stderr, "MODE value error.\n");
-        //MPI_Abort(MPI_COMM_WORLD, 2);
+        Matrix matrix = read_matrix(filename);
+        if (mode == 0) // Serial
+        {
+            decompose = band_matrix::lu_decomposition(matrix);
+            band_matrix::solve_lu(decompose, &matrix);
+        }
+        if (mode == 1)// OpenMP
+        {
+            decompose = band_matrix_omp::lu_decomposition_omp(matrix);
+            band_matrix_omp::solve_lu_omp(decompose, &matrix);
+        }
+        write_1d("solution.txt", matrix.X, matrix.n);
+
+        free_matrix(matrix.A, matrix.n);
+        free(matrix.C);
+        free(matrix.X);
+    }
+    else if (mode == 2 || mode == 3)
+    {
+        MPI_Init(&argc, &argv);
+        int rank = 0, size = 1;
+        MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+        MPI_Comm_size(MPI_COMM_WORLD, &size);
+
+        Matrix matrix;
+        if (rank == 0)
+        {
+            matrix = read_matrix("matrix2000.txt");
+        }
+        else
+        {
+            matrix.n = 0;
+            matrix.b = 0;
+            matrix.A = nullptr;
+            matrix.C = nullptr;
+            matrix.X = nullptr;
+        }
+
+        if (mode == 2) // MPI
+        {
+            decompose = band_matrix_mpi::lu_decomposition_mpi(matrix);
+            band_matrix_mpi::solve_lu_mpi(decompose, &matrix);
+        }
+        else  // MPI + OpenMP
+        {
+            decompose = band_matrix_mpi_omp::lu_decomposition_mpi_omp(matrix);
+            band_matrix_mpi_omp::solve_lu_mpi_omp(decompose, &matrix);
+        }
+
+        if (rank == 0)
+        {
+            write_1d("solution.txt", matrix.X, matrix.n);
+        }
+
+        free_matrix(matrix.A, matrix.n);
+        free(matrix.C);
+        free(matrix.X);
+
+        MPI_Finalize();
     }
 
     double end_time = get_time();
-
-    write_1d("solution.txt", matrix.X, matrix.n);
 
     if (0 == 1) {} 
 
@@ -126,7 +165,6 @@ int main(int argc, char* argv[])
         if (!load_numbers("solution.txt", numbers1, &count1) ||
             !load_numbers(output_filename, numbers2, &count2))
         {
-            //MPI_Finalize();
             return 1;
         }
 
@@ -140,10 +178,5 @@ int main(int argc, char* argv[])
         }
     }
 
-    free_matrix(matrix.A, matrix.n);
-    free(matrix.C);
-    free(matrix.X);
-
-    //MPI_Finalize();
     return 0;
 }
