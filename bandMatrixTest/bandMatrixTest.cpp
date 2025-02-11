@@ -1,6 +1,7 @@
 #include <cstdlib>
 #include <stdio.h>
 #include <stdlib.h>
+#include <cstring>
 #include <time.h>
 //#include <mpi.h>
 #include <omp.h>
