@@ -96,8 +96,11 @@ int main(int argc, char* argv[])
         double numbers1[MAX_NUMBERS], numbers2[MAX_NUMBERS];
         size_t count1, count2;
 
+        char msolutionName[256];
+        sprintf(msolutionName, "matlabSolutions/msolution%zux%zu.txt", matrix.n, matrix.n);
+
         if (!load_numbers("solution.txt", numbers1, &count1) ||
-            !load_numbers("msolution.txt", numbers2, &count2))
+            !load_numbers("msolutionName", numbers2, &count2))
         {
             //MPI_Finalize();
             return 1;

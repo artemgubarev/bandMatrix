@@ -10,13 +10,20 @@ if fid == -1
 end
 
 n = fscanf(fid, '%lf', 1); 
-fscanf(fid, '%lf', 1); 
+b_size = fscanf(fid, '%lf', 1); 
 A = fscanf(fid, '%lf', [n, n])'; 
 b = fscanf(fid, '%lf', [1, n])'; 
 fclose(fid); 
 
-x = A \ b; 
+x = A \ b;
 
-fid = fopen('msolution.txt', 'w');
+output_filename = sprintf('matlabSolutions/msolution%dx%d.txt', n, n);
+
+fid = fopen(output_filename, 'w');
+if fid == -1
+    error('Error: Cannot open output file %s', output_filename);
+end
 fprintf(fid, '%.15f ', x); 
 fclose(fid);
+
+fprintf('Solution saved to %s\n', output_filename);

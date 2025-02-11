@@ -19,8 +19,6 @@ export OMP_SCHEDULE="dynamic,4"
 export OMP_STACKSIZE=512M
 export OMP_WAIT_POLICY=passive
 
-matlab -nodisplay -nosplash -r "run('solve_slae.m'); exit;" > /dev/null 2>&1
-
 g++ -o bandMatrix bandMatrixTest.cpp -fopenmp
 
 srun --cpu-bind=cores ./bandMatrix
