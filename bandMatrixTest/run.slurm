@@ -10,12 +10,7 @@
 export INPUT_MATRIX_FILE="testData/matrix2000x1600.txt"
 export MODE=2
 
-export OMP_NUM_THREADS=2   
-export OMP_PROC_BIND=spread
-export OMP_PLACES=cores
-export OMP_SCHEDULE="dynamic,4"
-export OMP_STACKSIZE=512M
-export OMP_WAIT_POLICY=passive
+export OMP_NUM_THREADS=2
 
 module load mpi
 
