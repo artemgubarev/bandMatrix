@@ -9,13 +9,13 @@
 #include <mpi.h>
 #include <omp.h>
 #include "comparator.h"
-#include <matrix.h>
-#include <solver_serial.h>
-#include <solver_mpi.h>
-#include <solver_omp.h>
-#include <solver_mpi_omp.h>
-#include <solver_pthreads.h>
-#include <writer.h>
+#include "../bandMatrix/matrix.h"
+#include "../bandMatrix/solver_serial.h"
+#include "../bandMatrix/solver_mpi.h"
+#include "../bandMatrix/solver_omp.h"
+#include "../bandMatrix/solver_mpi_omp.h"
+#include "../bandMatrix/solver_pthreads.h"
+#include "../bandMatrix/writer.h"
 
 #ifdef _WIN32
 #include <windows.h>
