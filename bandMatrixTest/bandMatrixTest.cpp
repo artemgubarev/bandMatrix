@@ -1,3 +1,7 @@
+#define HAVE_STRUCT_TIMESPEC
+#define _NO_DEBUG_HEAP 1
+
+#include <windows.h>
 #include <cstdlib>
 #include <stdio.h>
 #include <stdlib.h>
@@ -6,12 +10,13 @@
 #include <mpi.h>
 #include <omp.h>
 #include "comparator.h"
-#include "../bandMatrix/matrix.h"
-#include "../bandMatrix/solver.h"
-#include "../bandMatrix/solver_mpi_omp.h"
-#include "../bandMatrix/solver_omp.h"
-#include "../bandMatrix/solver_mpi.h"
-#include "../bandMatrix/writer.h"
+#include <matrix.h>
+#include <solver_serial.h>
+#include <solver_mpi.h>
+#include <solver_omp.h>
+#include <solver_mpi_omp.h>
+#include <solver_pthreads.h>
+#include <writer.h>
 
 #ifdef _WIN32
 #include <windows.h>
@@ -57,7 +62,6 @@ void get_output_filename(const char* input_file, char* output_filename, size_t s
     snprintf(output_filename, size, "matlabSolutions/msolution%s.txt", name_only);
 }
 
-
 int main(int argc, char* argv[])
 {
     const char* filename = getenv("INPUT_MATRIX_FILE");
@@ -78,6 +82,9 @@ int main(int argc, char* argv[])
         fprintf(stderr, "Warning: MODE not set. Use default -1.\n");
     }
 
+    const char* filename = "matrix2000.txt";
+    int mode = 2;
+
     double start_time = get_time();
 
     DecomposeMatrix decompose;
@@ -87,11 +94,12 @@ int main(int argc, char* argv[])
         Matrix matrix = read_matrix(filename);
         if (mode == 0) // Serial
         {
-            decompose = band_matrix::lu_decomposition(matrix);
-            band_matrix::solve_lu(decompose, &matrix);
+            decompose = band_matrix_serial::lu_decomposition(matrix);
+            band_matrix_serial::solve_lu(decompose, &matrix);
         }
         if (mode == 1)// OpenMP
         {
+            omp_set_num_threads(8);
             decompose = band_matrix_omp::lu_decomposition_omp(matrix);
             band_matrix_omp::solve_lu_omp(decompose, &matrix);
         }
@@ -155,7 +163,8 @@ int main(int argc, char* argv[])
 
         // compare
         double epsilon = 0.00001;
-        double numbers1[MAX_NUMBERS], numbers2[MAX_NUMBERS];
+        double* numbers1 = new double[MAX_NUMBERS];
+        double* numbers2 = new double[MAX_NUMBERS];
         size_t count1, count2;
 
         char output_filename[512];
@@ -175,7 +184,9 @@ int main(int argc, char* argv[])
         {
             printf("\033[31mTest Failed\033[0m\n");
         }
-    }
 
+        delete[] numbers1;
+        delete[] numbers2;
+    }
     return 0;
 }

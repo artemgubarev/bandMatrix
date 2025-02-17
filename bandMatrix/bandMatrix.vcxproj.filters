@@ -18,7 +18,7 @@
     <ClInclude Include="matrix.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="solver.h">
+    <ClInclude Include="solver_serial.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="printer.h">
@@ -34,6 +34,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="solver_omp.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="solver_pthreads.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

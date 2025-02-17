@@ -5,9 +5,9 @@
 #include <utility>
 #include "matrix.h"
 
-namespace band_matrix
+namespace band_matrix_serial
 {
-    struct DecomposeMatrix lu_decomposition(Matrix matrix)
+    struct DecomposeMatrix lu_decomposition(struct Matrix matrix)
     {
         struct DecomposeMatrix result;
 
@@ -38,12 +38,13 @@ namespace band_matrix
 
         for (size_t k = 0; k < n - 1; ++k)
         {
-            for (size_t i = k + 1; i < std::min(k + b + 1, n); ++i)
+            size_t upper_bound = (k + b + 1 < n) ? (k + b + 1) : n;
+            for (size_t i = k + 1; i < upper_bound; ++i)
             {
                 result.l[i][k] = result.u[i][k] / result.u[k][k];
-                for (size_t j = k; j < std::min(k + b + 1, n); ++j)
+                for (size_t j = k; j < upper_bound; ++j)
                 {
-                    result.u[i][j] = result.u[i][j] - result.l[i][k] * result.u[k][j];
+                    result.u[i][j] -= result.l[i][k] * result.u[k][j];
                 }
             }
         }
@@ -52,59 +53,41 @@ namespace band_matrix
 
     void reverse_array(double* array, size_t n)
     {
-        double* reversed = new double[n];
-
-        for (int i = 0; i < n; ++i) {
-            reversed[i] = array[n - 1 - i];
+        size_t i;
+        double temp;
+        for (i = 0; i < n / 2; ++i)
+        {
+            temp = array[i];
+            array[i] = array[n - 1 - i];
+            array[n - 1 - i] = temp;
         }
-
-        for (int i = 0; i < n; ++i) {
-            array[i] = reversed[i];
-        }
-
-        delete[] reversed;
     }
 
-    void solve_lu(DecomposeMatrix decompose_matrix, Matrix* matrix)
+    void solve_lu(struct DecomposeMatrix decompose_matrix, struct Matrix* matrix)
     {
         size_t n = matrix->n;
-
         double* y = (double*)malloc(n * sizeof(double));
 
         for (size_t i = 0; i < n; i++)
         {
-            if (i == 0)
+            double s = 0.0;
+            for (size_t j = 0; j < i; j++)
             {
-                y[i] = matrix->C[i];
+                s += decompose_matrix.l[i][j] * y[j];
             }
-            else
-            {
-                double s = 0;
-                for (size_t j = 0; j < i; j++)
-                {
-                    s += decompose_matrix.l[i][j] * y[j];
-                }
-                y[i] = matrix->C[i] - s;
-            }
+            y[i] = matrix->C[i] - s;
         }
 
         matrix->X = (double*)malloc(n * sizeof(double));
 
         for (int i = n - 1, k = 0; i >= 0; --i, k++)
         {
-            if (i == n - 1)
+            double s = 0.0;
+            for (int j = n - 1; j > i; --j)
             {
-                matrix->X[k] = y[i] / decompose_matrix.u[i][i];
+                s += decompose_matrix.u[i][j] * matrix->X[n - j - 1];
             }
-            else
-            {
-                double s = 0;
-                for (int j = n - 1; j > i; --j)
-                {
-                    s += decompose_matrix.u[i][j] * matrix->X[n - j - 1];
-                }
-                matrix->X[k] = (y[i] - s) / decompose_matrix.u[i][i];
-            }
+            matrix->X[k] = (y[i] - s) / decompose_matrix.u[i][i];
         }
 
         reverse_array(matrix->X, n);

@@ -1,0 +1,11 @@
+﻿  bandMatrixTest.cpp
+C:\Users\artem\source\repos\bandMatrix\bandMatrixTest\comparator.h(11,18): error C4996: 'fopen': This function or variable may be unsafe. Consider using fopen_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+C:\Users\artem\source\repos\bandMatrix\bandMatrixTest\comparator.h(19,12): error C4996: 'fscanf': This function or variable may be unsafe. Consider using fscanf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+C:\Users\artem\source\repos\bandMatrix\bandMatrix\matrix.h(43,18): error C4996: 'fopen': This function or variable may be unsafe. Consider using fopen_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+C:\Users\artem\source\repos\bandMatrix\bandMatrix\matrix.h(53,5): error C4996: 'fscanf': This function or variable may be unsafe. Consider using fscanf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+C:\Users\artem\source\repos\bandMatrix\bandMatrix\matrix.h(54,5): error C4996: 'fscanf': This function or variable may be unsafe. Consider using fscanf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+C:\Users\artem\source\repos\bandMatrix\bandMatrix\matrix.h(63,13): error C4996: 'fscanf': This function or variable may be unsafe. Consider using fscanf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+C:\Users\artem\source\repos\bandMatrix\bandMatrix\matrix.h(69,9): error C4996: 'fscanf': This function or variable may be unsafe. Consider using fscanf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+C:\Users\artem\source\repos\bandMatrix\bandMatrix\solver.h(57,27): warning C4018: '<': signed/unsigned mismatch
+C:\Users\artem\source\repos\bandMatrix\bandMatrix\solver.h(61,27): warning C4018: '<': signed/unsigned mismatch
+C:\Users\artem\source\repos\bandMatrix\bandMatrix\solver_mpi_omp.h(3,10): fatal  error C1083: Cannot open include file: 'mpi.h': No such file or directory
