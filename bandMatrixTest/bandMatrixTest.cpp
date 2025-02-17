@@ -117,7 +117,7 @@ int main(int argc, char* argv[])
         Matrix matrix;
         if (rank == 0)
         {
-            matrix = read_matrix("matrix2000.txt");
+            matrix = read_matrix(filename);
         }
         else
         {

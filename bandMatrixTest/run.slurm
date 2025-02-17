@@ -11,7 +11,7 @@ module load mpi/impi/2021.4.0
 module load mpi/openmpi/1.10.5/gcc/6.3.0
 
 export INPUT_MATRIX_FILE="testData/matrix2000x1200.txt"
-export MODE=2
+export MODE=0
 export OMP_NUM_THREADS=2
 
 if [ "$MODE" -eq 0 ]; then
