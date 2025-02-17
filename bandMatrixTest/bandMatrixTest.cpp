@@ -85,6 +85,7 @@ int main(int argc, char* argv[])
     int mode = 2;*/
 
     double start_time = get_time();
+    double start_time_mpi = MPI_Wtime();
 
     DecomposeMatrix decompose;
 
@@ -110,7 +111,7 @@ int main(int argc, char* argv[])
     else if (mode == 2 || mode == 3)
     {
         MPI_Init(&argc, &argv);
-        int rank = 0, size = 1;
+        int rank, size;
         MPI_Comm_rank(MPI_COMM_WORLD, &rank);
         MPI_Comm_size(MPI_COMM_WORLD, &size);
 
@@ -151,13 +152,22 @@ int main(int argc, char* argv[])
         MPI_Finalize();
     }
 
+    double end_time_mpi = MPI_Wtime();
     double end_time = get_time();
 
     if (0 == 1) {} 
 
     if (mode != -1) {
 
-        printf("Time: %f sec.\n", end_time - start_time);
+        if (mode == 2 || mode == 3)
+        {
+            printf("Time: %f sec.\n", end_time_mpi - start_time_mpi);
+        }
+        else
+        {
+            printf("Time: %f sec.\n", end_time - start_time);
+        }
+        
 
         // compare
         double epsilon = 0.00001;

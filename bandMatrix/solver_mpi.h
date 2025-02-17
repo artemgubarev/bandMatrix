@@ -83,14 +83,10 @@ namespace band_matrix_mpi
         MPI_Comm_size(MPI_COMM_WORLD, &size);
 
         int n = matrix->n;
-
-        // Выделяем память под вспомогательный вектор y, если нужно
         double* y = (double*)malloc(n * sizeof(double));
 
-        // Rank 0 — выполняет прямой и обратный ход
         if (rank == 0)
         {
-            // ---- Прямой ход L*y = C ----
             for (int i = 0; i < n; i++) {
                 double s = 0.0;
                 for (int j = 0; j < i; j++) {
@@ -99,7 +95,6 @@ namespace band_matrix_mpi
                 y[i] = matrix->C[i] - s;
             }
 
-            // ---- Обратный ход U*x = y ----
             matrix->X = (double*)malloc(n * sizeof(double));
             for (int i = n - 1; i >= 0; i--) {
                 double s = 0.0;
@@ -110,15 +105,11 @@ namespace band_matrix_mpi
             }
         }
         else {
-            // На других рангах пока просто выделим X,
-            // чтобы был корректный указатель при Bcast.
             matrix->X = (double*)calloc(n, sizeof(double));
         }
 
-        // Рассылаем (bcast) готовый вектор X от Rank 0 ко всем
         MPI_Bcast(matrix->X, n, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
-        // Освобождаем временный буфер
         free(y);
     }
 }
