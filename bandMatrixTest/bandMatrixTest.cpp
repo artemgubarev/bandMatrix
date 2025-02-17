@@ -96,28 +96,6 @@ int main(int argc, char* argv[])
         MPI_Comm_size(MPI_COMM_WORLD, &size);
     }
 
-    const char* filename = getenv("INPUT_MATRIX_FILE");
-    if (!filename)
-    {
-        if (rank == 0) {  // ✅ Сообщаем ошибку только на Rank 0
-            fprintf(stderr, "Error: environment variable INPUT_MATRIX_FILE not set.\n");
-        }
-        return 1;
-    }
-
-    int mode = -1;
-    const char* mode_env = getenv("MODE");
-    if (mode_env)
-    {
-        mode = atoi(mode_env);
-    }
-    else
-    {
-        if (rank == 0) {  // ✅ Сообщаем предупреждение только на Rank 0
-            fprintf(stderr, "Warning: MODE not set. Use default -1.\n");
-        }
-    }
-
     // ✅ Теперь можно безопасно замерять MPI-время
     double start_time = get_time();
     double start_time_mpi = (mode == 2 || mode == 3) ? MPI_Wtime() : 0.0;
