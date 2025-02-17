@@ -1,7 +1,6 @@
 #define HAVE_STRUCT_TIMESPEC
 #define _NO_DEBUG_HEAP 1
 
-#include <windows.h>
 #include <cstdlib>
 #include <stdio.h>
 #include <stdlib.h>
@@ -82,8 +81,8 @@ int main(int argc, char* argv[])
         fprintf(stderr, "Warning: MODE not set. Use default -1.\n");
     }
 
-    const char* filename = "matrix2000.txt";
-    int mode = 2;
+  /*  const char* filename = "matrix2000.txt";
+    int mode = 2;*/
 
     double start_time = get_time();
 
