@@ -98,7 +98,6 @@ int main(int argc, char* argv[])
         }
         if (mode == 1)// OpenMP
         {
-            omp_set_num_threads(8);
             decompose = band_matrix_omp::lu_decomposition_omp(matrix);
             band_matrix_omp::solve_lu_omp(decompose, &matrix);
         }

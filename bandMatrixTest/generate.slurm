@@ -5,8 +5,8 @@
 #SBATCH --time=00:05:00
 #SBATCH --ntasks=1
 
-N=4000
-B=1756
+N=2000
+B=1200
 
 module load python/3.8
 python3 generator.py $N $B
