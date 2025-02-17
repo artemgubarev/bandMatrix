@@ -157,7 +157,7 @@ int main(int argc, char* argv[])
         free(matrix.C);
         free(matrix.X);
 
-        MPI_Finalize();  // ✅ Завершаем MPI в конце блока
+       
     }
 
     double end_time_mpi = (mode == 2 || mode == 3) ? MPI_Wtime() : 0.0;
@@ -202,6 +202,11 @@ int main(int argc, char* argv[])
             delete[] numbers1;
             delete[] numbers2;
         }
+    }
+
+    if (mode == 2 || mode == 3)
+    {
+        MPI_Finalize();
     }
 
     return 0;
