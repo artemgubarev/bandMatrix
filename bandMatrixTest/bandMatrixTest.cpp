@@ -1,4 +1,4 @@
-#define HAVE_STRUCT_TIMESPEC
+﻿#define HAVE_STRUCT_TIMESPEC
 #define _NO_DEBUG_HEAP 1
 
 #include <cstdlib>
@@ -84,8 +84,43 @@ int main(int argc, char* argv[])
   /*  const char* filename = "matrix2000.txt";
     int mode = 2;*/
 
+    if (mode == 2 || mode == 3)
+    {
+        MPI_Init(&argc, &argv);
+    }
+
+    int rank = 0, size = 1;
+    if (mode == 2 || mode == 3)
+    {
+        MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+        MPI_Comm_size(MPI_COMM_WORLD, &size);
+    }
+
+    const char* filename = getenv("INPUT_MATRIX_FILE");
+    if (!filename)
+    {
+        if (rank == 0) {  // ✅ Сообщаем ошибку только на Rank 0
+            fprintf(stderr, "Error: environment variable INPUT_MATRIX_FILE not set.\n");
+        }
+        return 1;
+    }
+
+    int mode = -1;
+    const char* mode_env = getenv("MODE");
+    if (mode_env)
+    {
+        mode = atoi(mode_env);
+    }
+    else
+    {
+        if (rank == 0) {  // ✅ Сообщаем предупреждение только на Rank 0
+            fprintf(stderr, "Warning: MODE not set. Use default -1.\n");
+        }
+    }
+
+    // ✅ Теперь можно безопасно замерять MPI-время
     double start_time = get_time();
-    double start_time_mpi = MPI_Wtime();
+    double start_time_mpi = (mode == 2 || mode == 3) ? MPI_Wtime() : 0.0;
 
     DecomposeMatrix decompose;
 
@@ -110,11 +145,6 @@ int main(int argc, char* argv[])
     }
     else if (mode == 2 || mode == 3)
     {
-        MPI_Init(&argc, &argv);
-        int rank, size;
-        MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-        MPI_Comm_size(MPI_COMM_WORLD, &size);
-
         Matrix matrix;
         if (rank == 0)
         {
@@ -149,52 +179,52 @@ int main(int argc, char* argv[])
         free(matrix.C);
         free(matrix.X);
 
-        MPI_Finalize();
+        MPI_Finalize();  // ✅ Завершаем MPI в конце блока
     }
 
-    double end_time_mpi = MPI_Wtime();
+    double end_time_mpi = (mode == 2 || mode == 3) ? MPI_Wtime() : 0.0;
     double end_time = get_time();
-
-    if (0 == 1) {} 
 
     if (mode != -1) {
 
-        if (mode == 2 || mode == 3)
-        {
-            printf("Time: %f sec.\n", end_time_mpi - start_time_mpi);
-        }
-        else
-        {
-            printf("Time: %f sec.\n", end_time - start_time);
-        }
-        
+        if (rank == 0) {  // ✅ Выводим только на Rank 0
+            if (mode == 2 || mode == 3)
+            {
+                printf("Time: %f sec.\n", end_time_mpi - start_time_mpi);
+            }
+            else
+            {
+                printf("Time: %f sec.\n", end_time - start_time);
+            }
 
-        // compare
-        double epsilon = 0.00001;
-        double* numbers1 = new double[MAX_NUMBERS];
-        double* numbers2 = new double[MAX_NUMBERS];
-        size_t count1, count2;
+            // compare
+            double epsilon = 0.00001;
+            double* numbers1 = new double[MAX_NUMBERS];
+            double* numbers2 = new double[MAX_NUMBERS];
+            size_t count1, count2;
 
-        char output_filename[512];
-        get_output_filename(filename, output_filename, sizeof(output_filename));
+            char output_filename[512];
+            get_output_filename(filename, output_filename, sizeof(output_filename));
 
-        if (!load_numbers("solution.txt", numbers1, &count1) ||
-            !load_numbers(output_filename, numbers2, &count2))
-        {
-            return 1;
+            if (!load_numbers("solution.txt", numbers1, &count1) ||
+                !load_numbers(output_filename, numbers2, &count2))
+            {
+                return 1;
+            }
+
+            if (compare_numbers(numbers1, numbers2, count1, count2, epsilon))
+            {
+                printf("\033[32mTest Correct\033[0m\n");
+            }
+            else
+            {
+                printf("\033[31mTest Failed\033[0m\n");
+            }
+
+            delete[] numbers1;
+            delete[] numbers2;
         }
-
-        if (compare_numbers(numbers1, numbers2, count1, count2, epsilon)) 
-        {
-            printf("\033[32mTest Correct\033[0m\n");
-        }
-        else 
-        {
-            printf("\033[31mTest Failed\033[0m\n");
-        }
-
-        delete[] numbers1;
-        delete[] numbers2;
     }
+
     return 0;
 }
