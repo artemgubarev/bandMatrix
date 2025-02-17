@@ -124,9 +124,9 @@ int main(int argc, char* argv[])
         {
             matrix.n = 0;
             matrix.b = 0;
-            matrix.A = nullptr;
-            matrix.C = nullptr;
-            matrix.X = nullptr;
+            matrix.A = NULL;
+            matrix.C = NULL;
+            matrix.X = NULL;
         }
 
         if (mode == 2) // MPI
