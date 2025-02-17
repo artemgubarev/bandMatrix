@@ -15,9 +15,9 @@ export MODE=0
 export OMP_NUM_THREADS=2
 
 if [ "$MODE" -eq 0 ]; then
-    g++ -o bandMatrix bandMatrixTest.cpp
+    mpicxx -o bandMatrix bandMatrixTest.cpp
 elif [ "$MODE" -eq 1 ]; then
-    g++ -o bandMatrix bandMatrixTest.cpp -fopenmp
+    mpicxx -o bandMatrix bandMatrixTest.cpp -fopenmp
 elif [ "$MODE" -eq 2 ]; then
     mpicxx -o bandMatrix bandMatrixTest.cpp
 elif [ "$MODE" -eq 3 ]; then
