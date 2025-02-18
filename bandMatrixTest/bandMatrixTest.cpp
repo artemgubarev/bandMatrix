@@ -222,18 +222,14 @@ int main(int argc, char* argv[])
 	if (mode_env) {
 		mode = atoi(mode_env);
 	}
-	else {
-		fprintf(stderr, "Warning: MODE not set. Use default -1.\n");
-	}
 
 	if (mode == 2 || mode == 3) {
 		MPI_Init(&argc, &argv);
-	}
-
-	int rank = 0, size = 1;
-	if (mode == 2 || mode == 3) {
+		int rank, size;
 		MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 		MPI_Comm_size(MPI_COMM_WORLD, &size);
+		printf("Process %d of %d started\n", rank, size);
+		fflush(stdout);  // Важно для немедленного вывода
 	}
 
 	double start_time = get_time();
