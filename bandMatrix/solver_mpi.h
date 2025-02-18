@@ -16,61 +16,54 @@ namespace band_matrix_mpi
         size_t n = matrix.n;
         size_t b = matrix.b;
 
-        // Выделение памяти для локальных частей матриц L и U
+        // Вычисление локального диапазона строк
         size_t rows_per_proc = n / size;
         size_t start_row = rank * rows_per_proc;
         size_t end_row = (rank == size - 1) ? n : start_row + rows_per_proc;
 
+        // Выделение памяти
         result.l = (double**)malloc(n * sizeof(double*));
         result.u = (double**)malloc(n * sizeof(double*));
 
-        for (size_t i = 0; i < n; i++)
-        {
+        for (size_t i = 0; i < n; i++) {
             result.l[i] = (double*)calloc(n, sizeof(double));
             result.u[i] = (double*)malloc(n * sizeof(double));
-        }
 
-        // Копирование исходной матрицы в U
-        for (size_t i = 0; i < n; i++)
-        {
-            for (size_t j = 0; j < n; j++)
-            {
-                result.u[i][j] = matrix.A[i][j];
+            // Копирование только своей части данных
+            if (i >= start_row && i < end_row) {
+                for (size_t j = 0; j < n; j++) {
+                    result.u[i][j] = matrix.A[i][j];
+                }
             }
         }
 
         // Инициализация диагональных элементов L
-        for (size_t i = 0; i < n; i++)
-        {
+        for (size_t i = start_row; i < end_row; i++) {
             result.l[i][i] = 1.0;
         }
 
         // Основной цикл LU-разложения
-        for (size_t k = 0; k < n - 1; ++k)
-        {
-            // Broadcast k-й строки матрицы U
+        for (size_t k = 0; k < n - 1; k++) {
+            // Broadcast k-й строки
             MPI_Bcast(result.u[k], n, MPI_DOUBLE, k / rows_per_proc, MPI_COMM_WORLD);
 
             size_t upper_bound = (k + b + 1 < n) ? (k + b + 1) : n;
 
-            // Каждый процесс обрабатывает свою часть строк
-            for (size_t i = k + 1; i < upper_bound; ++i)
-            {
-                if (i >= start_row && i < end_row)
-                {
+            // Обработка только своих строк
+            for (size_t i = k + 1; i < upper_bound; i++) {
+                if (i >= start_row && i < end_row) {
                     result.l[i][k] = result.u[i][k] / result.u[k][k];
-                    for (size_t j = k; j < upper_bound; ++j)
-                    {
+                    for (size_t j = k; j < upper_bound; j++) {
                         result.u[i][j] -= result.l[i][k] * result.u[k][j];
                     }
                 }
             }
 
-            // Синхронизация результатов между процессами
-            for (size_t i = k + 1; i < upper_bound; ++i)
-            {
-                MPI_Bcast(result.u[i], n, MPI_DOUBLE, i / rows_per_proc, MPI_COMM_WORLD);
-                MPI_Bcast(result.l[i], n, MPI_DOUBLE, i / rows_per_proc, MPI_COMM_WORLD);
+            // Синхронизация результатов
+            for (size_t i = k + 1; i < upper_bound; i++) {
+                int owner = i / rows_per_proc;
+                MPI_Bcast(result.u[i], n, MPI_DOUBLE, owner, MPI_COMM_WORLD);
+                MPI_Bcast(result.l[i], n, MPI_DOUBLE, owner, MPI_COMM_WORLD);
             }
         }
 

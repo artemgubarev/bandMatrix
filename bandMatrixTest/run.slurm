@@ -4,12 +4,12 @@
 #SBATCH --error=err.log
 #SBATCH --nodes=2              
 #SBATCH --ntasks=4             
-#SBATCH --cpus-per-task=4     
+#SBATCH --cpus-per-task=1    
 #SBATCH --time=01:00:00
 
 export INPUT_MATRIX_FILE="testData/matrix2000x1200.txt"
 export MODE=2
-export OMP_NUM_THREADS=4
+export OMP_NUM_THREADS=1
 
 if [ "$MODE" -eq 0 ]; then
     mpicxx -o bandMatrix bandMatrixTest.cpp
