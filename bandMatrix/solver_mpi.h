@@ -119,6 +119,7 @@
 #include <stdlib.h>
 #include <math.h>
 
+
 // Структура для локальной части матрицы
 typedef struct {
     int local_n;      // число строк, принадлежащих данному процессу
@@ -134,7 +135,7 @@ namespace band_matrix_mpi {
 
     // Параллельное LU-разложение для полосатой матрицы с распределением по строкам.
     // Факторизация выполняется "на месте": в A сохраняется U, а ниже диагонали – множители L (с диагональю, равной 1).
-    void lu_decomposition_mpi_parallel(LocalMatrix& localMat) {
+    void lu_decomposition_mpi(LocalMatrix& localMat) {
         int rank, nprocs;
         MPI_Comm_rank(MPI_COMM_WORLD, &rank);
         MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
@@ -191,7 +192,7 @@ namespace band_matrix_mpi {
     // Параллельное решение системы A*x = C.
     // Сначала решается L*y = C (прямой ход), затем U*x = y (обратный ход).
     // Для каждого шага владеющий процесс вычисляет элемент, затем транслирует его всем.
-    void solve_lu_mpi_parallel(LocalMatrix& localMat) {
+    void solve_lu_mpi(LocalMatrix& localMat) {
         int rank, nprocs;
         MPI_Comm_rank(MPI_COMM_WORLD, &rank);
         MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
@@ -265,5 +266,3 @@ namespace band_matrix_mpi {
     }
 
 } // end namespace band_matrix_mpi
-
-#endif
