@@ -312,9 +312,9 @@ int main(int argc, char* argv[])
     // Распределяем строки матрицы A по процессам.
     // На Rank 0 матрица хранится как массив указателей на строки, скопируем её в один непрерывный буфер.
     double* local_A = (double*)malloc(local_n * n * sizeof(double));
-    double* sendbuf = nullptr;
-    int* sendcounts = nullptr;
-    int* displs = nullptr;
+    double* sendbuf = NULL;
+    int* sendcounts = NULL;
+    int* displs = NULL;
     if (rank == 0) {
         sendbuf = (double*)malloc(n * n * sizeof(double));
         for (int i = 0; i < n; i++) {
@@ -339,9 +339,9 @@ int main(int argc, char* argv[])
 
     // Распространяем вектор C аналогичным образом
     double* local_C = (double*)malloc(local_n * sizeof(double));
-    double* sendC = nullptr;
-    int* sendcounts_C = nullptr;
-    int* displs_C = nullptr;
+    double* sendC = NULL;
+    int* sendcounts_C = NULL;
+    int* displs_C = NULL;
     if (rank == 0) {
         sendC = full_matrix.C; // C уже хранится непрерывно
         sendcounts_C = new int[nprocs];
@@ -375,9 +375,9 @@ int main(int argc, char* argv[])
     band_matrix_mpi::solve_lu_mpi(localMat);
 
     // Собираем решение X с разных процессов в глобальный вектор на Rank 0
-    double* global_X = nullptr;
-    int* recvcounts = nullptr;
-    int* recvdispls = nullptr;
+    double* global_X = NULL;
+    int* recvcounts = NULL;
+    int* recvdispls = NULL;
     if (rank == 0) {
         global_X = (double*)malloc(n * sizeof(double));
         recvcounts = new int[nprocs];
