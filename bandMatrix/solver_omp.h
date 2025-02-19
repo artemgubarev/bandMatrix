@@ -9,7 +9,6 @@
 
 namespace band_matrix_omp
 {
-    // LU-разложение дл€ полосатой матрицы с использованием OpenMP.
     DecomposeMatrix lu_decomposition_omp(const Matrix matrix)
     {
         int n = matrix.n;
@@ -26,8 +25,10 @@ namespace band_matrix_omp
 
         // ѕараллельна€ инициализаци€ матриц L и U.
         #pragma omp parallel for schedule(static)
-        for (int i = 0; i < n; i++) {
-            for (int j = 0; j < n; j++) {
+        for (int i = 0; i < n; i++) 
+        {
+            for (int j = 0; j < n; j++) 
+            {
                 result.u[i][j] = matrix.A[i][j];
             }
             result.l[i][i] = 1.0;
@@ -39,9 +40,11 @@ namespace band_matrix_omp
 
             // ќбновление строк от k+1 до k+b (учитыва€ границу n).
             #pragma omp parallel for schedule(static)
-            for (int i = k + 1; i < MIN(k + b + 1, n); i++) {
+            for (int i = k + 1; i < MIN(k + b + 1, n); i++) 
+            {
                 result.l[i][k] = result.u[i][k] / pivotVal;
-                for (int j = k; j < MIN(k + b + 1, n); j++) {
+                for (int j = k; j < MIN(k + b + 1, n); j++) 
+                {
                     result.u[i][j] -= result.l[i][k] * result.u[k][j];
                 }
             }
@@ -58,11 +61,13 @@ namespace band_matrix_omp
 
         // ѕр€мой ход: решение системы L*y = C.
         // ƒанный цикл вынужден быть последовательным, т.к. y[i] зависит от y[0..i-1].
-        for (int i = 0; i < n; i++) {
+        for (int i = 0; i < n; i++) 
+        {
             double s = 0.0;
             // ¬нутренний цикл суммировани€ можно распараллелить, если число элементов достаточно велико.
             #pragma omp parallel for reduction(+:s) schedule(static)
-            for (int j = 0; j < i; j++) {
+            for (int j = 0; j < i; j++) 
+            {
                 s += decomp.l[i][j] * y[j];
             }
             y[i] = matrix->C[i] - s;
@@ -70,10 +75,12 @@ namespace band_matrix_omp
 
         // ќбратный ход: решение системы U*x = y.
         matrix->X = (double*)malloc(n * sizeof(double));
-        for (int i = (int)n - 1; i >= 0; i--) {
+        for (int i = (int)n - 1; i >= 0; i--) 
+        {
             double s = 0.0;
             #pragma omp parallel for reduction(+:s) schedule(static)
-            for (int j = i + 1; j < (int)n; j++) {
+            for (int j = i + 1; j < (int)n; j++) 
+            {
                 s += decomp.u[i][j] * matrix->X[j];
             }
             matrix->X[i] = (y[i] - s) / decomp.u[i][i];
