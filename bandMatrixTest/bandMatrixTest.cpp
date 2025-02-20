@@ -278,6 +278,7 @@ int main(int argc, char* argv[])
 
 	if (rank == 0) {
 		matrix = read_matrix_mpi(filename);
+		//matrix = read_matrix_mpi("C:\\Users\\artem\\source\\repos\\BandMatrixPython\\matrix2000.txt");
 		n = matrix.n;
 		b = matrix.b;
 	}
