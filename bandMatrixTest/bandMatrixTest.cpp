@@ -16,25 +16,29 @@
 #include "../bandMatrix/solver_mpi_omp.h"
 #include "../bandMatrix/solver_pthreads.h"
 #include "../bandMatrix/writer.h"
+#include "../bandMatrix/printer.h"
+
+//#include <scalapack.h>
+
 
 #ifdef _WIN32
 #include <windows.h>
 #else
 #include <sys/time.h>
 #endif
-
-double get_time() {
-#ifdef _WIN32
-	LARGE_INTEGER frequency, start;
-	QueryPerformanceFrequency(&frequency);
-	QueryPerformanceCounter(&start);
-	return (double)start.QuadPart / frequency.QuadPart;
-#else
-	struct timespec t;
-	clock_gettime(CLOCK_MONOTONIC, &t);
-	return t.tv_sec + t.tv_nsec * 1e-9;
-#endif
-}
+//
+//double get_time() {
+//#ifdef _WIN32
+//	LARGE_INTEGER frequency, start;
+//	QueryPerformanceFrequency(&frequency);
+//	QueryPerformanceCounter(&start);
+//	return (double)start.QuadPart / frequency.QuadPart;
+//#else
+//	struct timespec t;
+//	clock_gettime(CLOCK_MONOTONIC, &t);
+//	return t.tv_sec + t.tv_nsec * 1e-9;
+//#endif
+//}
 
 void get_output_filename(const char* input_file, char* output_filename, size_t size)
 {
@@ -61,6 +65,8 @@ void get_output_filename(const char* input_file, char* output_filename, size_t s
 	snprintf(output_filename, size, "matlabSolutions/msolution%s.txt", name_only);
 }
 
+#define MAX_LINE_LENGTH 300000
+
 double** allocate_matrix_mpi(size_t n) {
 	double** matrix = (double**)malloc(n * sizeof(double*));
 	if (!matrix) {
@@ -86,30 +92,42 @@ Matrix read_matrix_mpi(const char* filename) {
 		exit(EXIT_FAILURE);
 	}
 
-	if (fscanf(file, "%zu", &mat.n) != 1 || fscanf(file, "%zu", &mat.b) != 1) {
-		perror("Error reading matrix dimensions");
+	if (fscanf(file, "%zu", &mat.n) != 1) {
+		fprintf(stderr, "Error reading n from file: %s\n", strerror(errno));
 		exit(EXIT_FAILURE);
 	}
 
-	mat.A = allocate_matrix(mat.n);
+	if (fscanf(file, "%zu", &mat.b) != 1) {
+		fprintf(stderr, "Error reading b from file: %s\n", strerror(errno));
+		exit(EXIT_FAILURE);
+	}
+
+	// 3) Выделяем память под матрицу A и вектор C
+	mat.A = allocate_matrix_mpi(mat.n);
 	mat.C = (double*)malloc(mat.n * sizeof(double));
 	if (!mat.C) {
 		perror("Error allocating vector C");
 		exit(EXIT_FAILURE);
 	}
+	mat.X = NULL;  // Инициализируем указатель решения
 
-	for (size_t i = 0; i < mat.n; i++) {
-		for (size_t j = 0; j < mat.n; j++) {
-			if (fscanf(file, "%lf", &mat.A[i][j]) != 1) {
-				perror("Error reading matrix data");
-				exit(EXIT_FAILURE);
-			}
+	// 4) Считываем n*n чисел матрицы
+	size_t total_matrix_elements = mat.n * mat.n;
+	for (size_t idx = 0; idx < total_matrix_elements; idx++) {
+		if (fscanf(file, "%lf", &mat.A[0][idx]) != 1) {
+			fprintf(stderr,
+				"Error reading matrix data at element %zu (expected %zu total)\n",
+				idx, total_matrix_elements);
+			exit(EXIT_FAILURE);
 		}
 	}
 
+	// 5) Считываем n чисел вектора C
 	for (size_t i = 0; i < mat.n; i++) {
 		if (fscanf(file, "%lf", &mat.C[i]) != 1) {
-			perror("Error reading vector C");
+			fprintf(stderr,
+				"Error reading vector C at index %zu (expected %zu elements)\n",
+				i, mat.n);
 			exit(EXIT_FAILURE);
 		}
 	}
@@ -121,7 +139,7 @@ Matrix read_matrix_mpi(const char* filename) {
 int main(int argc, char* argv[])
 {
 	const char* filename = getenv("INPUT_MATRIX_FILE");
-	if (!filename) 
+	if (!filename)
 	{
 		fprintf(stderr, "Error: environment variable INPUT_MATRIX_FILE not set.\n");
 		return 1;
@@ -274,16 +292,17 @@ int main(int argc, char* argv[])
 	MPI_Comm_size(comm, &size);
 
 	Matrix matrix;
+	matrix.X = NULL; // Инициализируем указатель решения
 	size_t n = 0, b = 0;
 
 	if (rank == 0) {
-		matrix = read_matrix_mpi(filename);
-		//matrix = read_matrix_mpi("C:\\Users\\artem\\source\\repos\\BandMatrixPython\\matrix2000.txt");
+		//matrix = read_matrix_mpi("C:\\Users\\artem\\source\\repos\\BandMatrixPython\\matrix4000.txt");
+		matrix = read_matrix(filename);
 		n = matrix.n;
 		b = matrix.b;
 	}
 
-	// Рассылаем параметры
+	// Рассылаем параметры n и b всем процессам
 	MPI_Bcast(&n, 1, MPI_UNSIGNED_LONG, 0, comm);
 	MPI_Bcast(&b, 1, MPI_UNSIGNED_LONG, 0, comm);
 
@@ -293,27 +312,33 @@ int main(int argc, char* argv[])
 		matrix.A = allocate_matrix_mpi(n);
 		matrix.C = (double*)malloc(n * sizeof(double));
 		if (!matrix.C) {
-			perror("Error allocating vector C on non-root process");
-			exit(EXIT_FAILURE);
+			perror("Ошибка выделения вектора C на не-root процессе");
+			MPI_Abort(comm, EXIT_FAILURE);
 		}
+		matrix.X = NULL;
 	}
 
-	// Рассылаем данные только если память выделена
+	// Рассылаем данные матрицы A и вектора C всем процессам.
+	// Так как матрица A выделена как один непрерывный блок, можно передавать matrix.A[0].
 	MPI_Bcast(matrix.A[0], n * n, MPI_DOUBLE, 0, comm);
 	MPI_Bcast(matrix.C, n, MPI_DOUBLE, 0, comm);
 
 	double start_time_mpi = MPI_Wtime();
 
-	DecomposeMatrix decomp = band_matrix_mpi::lu_decomposition(matrix, comm);
-	band_matrix_mpi::solve_lu(decomp, &matrix, comm);
+	DecomposeMatrix decomp = band_matrix_mpi_omp::lu_decomposition(matrix);
+	band_matrix_mpi_omp::solve_lu(decomp, &matrix);
 
 	double end_time_mpi = MPI_Wtime();
-	if (rank == 0) 
-	{
+	if (rank == 0) {
 		printf("Time: %f sec.\n", end_time_mpi - start_time_mpi);
+		//print_1d(matrix.X, matrix.n);
 	}
 
-	free(matrix.A[0]);
+	//print_2d(matrix.A, matrix.n);
+	
+
+	// Освобождаем выделенную память
+	free(matrix.A[0]); // Освобождаем непрерывный блок данных
 	free(matrix.A);
 	free(matrix.C);
 	free(matrix.X);
@@ -326,7 +351,6 @@ int main(int argc, char* argv[])
 	free(decomp.u);
 
 	MPI_Finalize();
-
 	return 0;
 }
 

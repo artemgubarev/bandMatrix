@@ -11,129 +11,152 @@
 
 namespace band_matrix_mpi_omp
 {
-    //=============================================================================
-    // Гибридная функция LU-разложения полосатой (ленточной) матрицы с использованием MPI + OpenMP.
-    // Логика:
-    //  1) Rank 0 читает и хранит полную матрицу A.
-    //  2) Rank 0 делает факторизацию LU, но внтури факторизации распараллеливает циклы с помощью OpenMP.
-    //  3) По окончании — все матрицы L и U рассылаются (MPI_Bcast) остальным процессам.
-    //=============================================================================
-    DecomposeMatrix lu_decomposition_mpi_omp(const Matrix& matrix)
-    {
-        // Определяем rank и size
-        int rank, size;
-        MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-        MPI_Comm_size(MPI_COMM_WORLD, &size);
+	void reverse_array(double* array, int n) {
+		for (int i = 0; i < n / 2; i++) {
+			double tmp = array[i];
+			array[i] = array[n - 1 - i];
+			array[n - 1 - i] = tmp;
+		}
+	}
 
-        int n = matrix.n;
-        int b = matrix.b;
+	/* Параллельное LU-разложение ленточной матрицы с гибридной MPI+OpenMP параллелизацией.
+	   Строки распределяются блочно между процессами MPI, а внутренние циклы обновления распараллеливаются OpenMP. */
+	DecomposeMatrix lu_decomposition(Matrix matrix) {
+		int rank, size;
+		MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+		MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-        // На каждом процессе выделяем память для L и U (n x n).
-        DecomposeMatrix result;
-        result.l = (double**)malloc(n * sizeof(double*));
-        result.u = (double**)malloc(n * sizeof(double*));
-        for (int i = 0; i < n; i++) {
-            result.l[i] = (double*)calloc(n, sizeof(double));
-            result.u[i] = (double*)malloc(n * sizeof(double));
-        }
+		int n = matrix.n;
+		int b = matrix.b;
 
-        // ====== Rank 0 делает всю работу по факторизации, параллелизуя OpenMP ======
-        if (rank == 0)
-        {
-            // 1) Инициализация U копией A, и L — единичная диагональ
-            // Параллелим инициализацию циклов с помощью OpenMP
-            #pragma omp parallel for schedule(static)
-            for (int i = 0; i < n; i++) {
-                for (int j = 0; j < n; j++) {
-                    result.u[i][j] = matrix.A[i][j];
-                }
-                result.l[i][i] = 1.0;
-            }
+		DecomposeMatrix result;
+		result.l = (double**)malloc(n * sizeof(double*));
+		result.u = (double**)malloc(n * sizeof(double*));
+		for (int i = 0; i < n; i++) {
+			result.l[i] = (double*)calloc(n, sizeof(double));
+			result.u[i] = (double*)malloc(n * sizeof(double));
+		}
 
-            // 2) Выполнение LU-факторизации с использованием OpenMP
-            //    (без выбора главного элемента).
-            for (int k = 0; k < n - 1; k++) {
-                double pivotVal = result.u[k][k];
+		/* Копируем исходную матрицу A в U.
+		   Этот цикл можно распараллелить по строкам с OpenMP. */
+#pragma omp parallel for schedule(static)
+		for (int i = 0; i < n; i++) {
+			for (int j = 0; j < n; j++) {
+				result.u[i][j] = matrix.A[i][j];
+			}
+		}
 
-                // Обновляем строки i = k+1..k+b
-                // Распараллелим цикл по i
-                #pragma omp parallel for schedule(static)
-                for (int i = k + 1; i < MIN(k + b + 1, n); i++) {
-                    result.l[i][k] = result.u[i][k] / pivotVal;
-                    for (int j = k; j < MIN(k + b + 1, n); j++) {
-                        result.u[i][j] -= result.l[i][k] * result.u[k][j];
-                    }
-                }
-            }
-        }
+		/* Диагональные элементы L равны 1 */
+#pragma omp parallel for schedule(static)
+		for (int i = 0; i < n; i++) {
+			result.l[i][i] = 1.0;
+		}
 
-        // ====== Рассылаем результаты L и U всем процессам ======
-        // Здесь все процессы (включая Rank 0) участвуют в Bcast,
-        // чтобы у всех был одинаковый L,U.
-        for (int i = 0; i < n; i++) {
-            MPI_Bcast(result.l[i], n, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-            MPI_Bcast(result.u[i], n, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-        }
+		// Определяем диапазон строк, обрабатываемых данным процессом MPI
+		int start_row = (n * rank) / size;
+		int end_row = (n * (rank + 1)) / size;
 
-        return result;
-    }
+		// Основной цикл факторизации
+		for (int k = 0; k < n - 1; k++) {
+			// Обновление выполняется только в пределах ленты: от k до upper_bound
+			int upper_bound = (k + b + 1 < n) ? (k + b + 1) : n;
 
-    //=============================================================================
-    // Решение системы A*x = C (где A = L*U) с использованием MPI + OpenMP.
-    // Логика:
-    //  1) Rank 0 делает прямой/обратный ход.
-    //     - Прямой ход (L*y = C) можно частично распараллелить внутренний цикл суммирования.
-    //     - Обратный ход (U*x = y) тоже частично распараллелить.
-    //  2) Рассылает (MPI_Bcast) найденный вектор X всем остальным процессам.
-    //=============================================================================
-    void solve_lu_mpi_omp(const DecomposeMatrix& decomp, Matrix* matrix)
-    {
-        int rank, size;
-        MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-        MPI_Comm_size(MPI_COMM_WORLD, &size);
+			// Определяем процесс-владельца строки k
+			int owner = (k * size) / n;
 
-        int n = matrix->n;
+			// Буфер для передачи части строки k (от столбца k до upper_bound)
+			int segment_length = upper_bound - k;
+			double* u_row_segment = (double*)malloc(segment_length * sizeof(double));
+			if (rank == owner) {
+				for (int j = k; j < upper_bound; j++) {
+					u_row_segment[j - k] = result.u[k][j];
+				}
+			}
+			// Используем неблокирующий Bcast для передачи сегмента
+			MPI_Request req;
+			MPI_Ibcast(u_row_segment, segment_length, MPI_DOUBLE, owner, MPI_COMM_WORLD, &req);
+			MPI_Wait(&req, MPI_STATUS_IGNORE);
 
-        // Выделяем память под вспомогательный вектор y
-        double* y = (double*)malloc(n * sizeof(double));
+			// Каждый процесс обновляет свои строки, попадающие в диапазон [max(k+1, start_row), end_row)
+			int local_start = (k + 1 > start_row) ? k + 1 : start_row;
+			int loop_end = (end_row < upper_bound) ? (int)end_row : (int)upper_bound;
+			int local_start_int = (int)local_start;
+#pragma omp parallel for schedule(static)
+			for (int i = local_start_int; i < loop_end; i++) {
+				// ...
+				result.l[i][k] = result.u[i][k] / u_row_segment[0];
+				for (int j = k; j < upper_bound; j++) {
+					result.u[i][j] -= result.l[i][k] * u_row_segment[j - k];
+				}
+			}
+			free(u_row_segment);
+			// Явный барьер не нужен – синхронизация происходит при MPI_Ibcast.
+		}
+		return result;
+	}
 
-        // Rank 0 — выполняет прямой и обратный ход
-        if (rank == 0)
-        {
-            // ---- Прямой ход L*y = C ----
-            for (int i = 0; i < n; i++) {
-                double s = 0.0;
-                // Внутренний цикл суммирования можно распараллелить
-                #pragma omp parallel for reduction(+:s)
-                for (int j = 0; j < i; j++) {
-                    s += decomp.l[i][j] * y[j];
-                }
-                y[i] = matrix->C[i] - s;
-            }
+	/* Параллельное решение системы методом LU-разложения с гибридной параллелизацией.
+	   Прямой и обратный ходы распараллеливаются по строкам MPI, а внутренние суммирования используют OpenMP.
+	*/
+	void solve_lu(DecomposeMatrix decompose_matrix, Matrix* matrix) {
+		int rank, size;
+		MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+		MPI_Comm_size(MPI_COMM_WORLD, &size);
+		int n = matrix->n;
 
-            // ---- Обратный ход U*x = y ----
-            matrix->X = (double*)malloc(n * sizeof(double));
+		// Определяем распределение строк по процессам MPI
+		int start_row = (n * rank) / size;
+		int end_row = (n * (rank + 1)) / size;
 
-            for (int i = n - 1; i >= 0; i--) {
-                double s = 0.0;
-                // Снова распараллелим внутренний цикл суммирования
-                #pragma omp parallel for reduction(+:s)
-                for (int j = i + 1; j < n; j++) {
-                    s += decomp.u[i][j] * matrix->X[j];
-                }
-                matrix->X[i] = (y[i] - s) / decomp.u[i][i];
-            }
-        }
-        else {
-            // На других рангах просто выделим X, чтобы иметь корректный указатель
-            matrix->X = (double*)calloc(n, sizeof(double));
-        }
+		double* y = (double*)malloc(n * sizeof(double));
 
-        // Рассылаем (bcast) готовый вектор X от Rank 0 ко всем
-        MPI_Bcast(matrix->X, n, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+		/* Прямой ход: решаем L*y = C.
+		   Для каждой строки i:
+			 - Если строка принадлежит текущему процессу, вычисляем y[i] = C[i] - sum(L[i][j]*y[j])
+			   с параллельным суммированием.
+			 - Затем с помощью неблокирующего Bcast передаём y[i] всем процессам.
+		*/
+		for (int i = 0; i < n; i++) {
+			if (i >= start_row && i < end_row) {
+				double s = 0.0;
+#pragma omp parallel for reduction(+:s) schedule(static)
+				for (int j = 0; j < i; j++) {
+					s += decompose_matrix.l[i][j] * y[j];
+				}
+				y[i] = matrix->C[i] - s;
+			}
+			int owner = (i * size) / n;  // процесс-владелец строки i
+			MPI_Request req;
+			MPI_Ibcast(&y[i], 1, MPI_DOUBLE, owner, MPI_COMM_WORLD, &req);
+			MPI_Wait(&req, MPI_STATUS_IGNORE);
+		}
 
-        // Освобождаем временный буфер
-        free(y);
-    }
+		/* Обратный ход: решаем U*x = y.
+		   Итерация идёт от последней строки к первой.
+		   Для каждой строки i:
+			 - Если строка принадлежит процессу, вычисляем x[i] = (y[i] - sum(U[i][j]*x[j])) / U[i][i]
+			   с параллельным суммированием.
+			 - Затем рассылаем x[i] всем процессам.
+		*/
+		if (matrix->X == NULL) {
+			matrix->X = (double*)malloc(n * sizeof(double));
+		}
+		for (int i = n - 1; i >= 0; i--) {
+			if (i >= start_row && i < end_row) {
+				double s = 0.0;
+#pragma omp parallel for reduction(+:s) schedule(static)
+				for (int j = i + 1; j < n; j++) {
+					s += decompose_matrix.u[i][j] * matrix->X[j];
+				}
+				matrix->X[i] = (y[i] - s) / decompose_matrix.u[i][i];
+			}
+			int owner = (i * size) / n;
+			MPI_Request req;
+			MPI_Ibcast(&matrix->X[i], 1, MPI_DOUBLE, owner, MPI_COMM_WORLD, &req);
+			MPI_Wait(&req, MPI_STATUS_IGNORE);
+		}
 
+		free(y);
+
+	}
 }
