@@ -91,7 +91,7 @@ Matrix read_matrix_mpi(const char* filename) {
 		exit(EXIT_FAILURE);
 	}
 
-	if (fscanf(file, "%zu", &mat.n) != 1) {
+	/*if (fscanf(file, "%zu", &mat.n) != 1) {
 		fprintf(stderr, "Error reading n from file: %s\n", strerror(errno));
 		exit(EXIT_FAILURE);
 	}
@@ -99,7 +99,7 @@ Matrix read_matrix_mpi(const char* filename) {
 	if (fscanf(file, "%zu", &mat.b) != 1) {
 		fprintf(stderr, "Error reading b from file: %s\n", strerror(errno));
 		exit(EXIT_FAILURE);
-	}
+	}*/
 
 	// 3) Выделяем память под матрицу A и вектор C
 	mat.A = allocate_matrix_mpi(mat.n);
