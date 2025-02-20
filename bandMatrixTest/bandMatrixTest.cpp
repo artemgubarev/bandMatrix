@@ -65,7 +65,6 @@ void get_output_filename(const char* input_file, char* output_filename, size_t s
 	snprintf(output_filename, size, "matlabSolutions/msolution%s.txt", name_only);
 }
 
-#define MAX_LINE_LENGTH 300000
 
 double** allocate_matrix_mpi(size_t n) {
 	double** matrix = (double**)malloc(n * sizeof(double*));
